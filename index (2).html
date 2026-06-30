@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Школьный портал «МОЯ ШКОЛА» v4.1 Ephemeral</title>
+    <!-- Подключаем библиотеки Firebase через CDN -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+        :root {
+            /* Переменные для светлой темы с неоновыми акцентами */
+            --bg-light: #f0f2f5; /* Светлый фон (как в ВК) */
+            --panel-bg-light: rgba(255, 255, 255, 0.85); /* Полупрозрачные белые панели */
+            --sber-green: #00b372; /* Зеленый Сбер */
+            --vtb-blue: #00aaff; /* Неоновый синий ВТБ */
+            --tg-blue: #24a1de; /* Телеграм синий */
+            --discord-purple: #7289da; /* Дискорд фиолетовый */
+            --text-dark: #2c2d2e;
+            --text-muted-dark: #666e7a;
+            --border-light: #d8dee7;
+            --header-bg: rgba(240, 242, 245, 0.9);
+            --shadow-light: rgba(0, 0, 0, 0.05);
+
+            /* Фоновые изображения */
+            --auth-bg-image: url('https://i.ibb.co/WXBb7yV/792f365f758b818dfa3be5c531a9b71e.jpg'); /* Стартовая страница (Твоя новая ссылка) */
+            --main-bg-image: url('https://i.ibb.co/bMCgJ7db/9c271b0b0c6e99773b755b1ff309610f.jpg'); /* После входа (Твоя новая ссылка) */
+        }
+
+        /* Общие сбросы и шрифты */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            transition: background-image 1s ease-in-out; /* Плавный переход фона */
+            position: relative; /* Для наложения затемнения */
+        }
+        body::before { /* Затемнение для читаемости текста */
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.3); /* Темный полупрозрачный слой */
+            z-index: -1;
+        }
+
+        /* 🚀 ЗАСТАВКА */
+        #splashScreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--bg-light); /* Фон заставки */
+            z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        .spinner {
+            width: 70px; height: 70px;
+            border: 5px solid rgba(0, 170, 255, 0.1);
+            border-top: 5px solid var(--vtb-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .splash-text {
+            font-family: 'Fira Code', monospace;
+            color: var(--sber-green);
+            font-size: 14px;
+        }
+
+        /* АВТОРИЗАЦИЯ */
+        #authScreen {
+            max-width: 420px; width: 90%; margin: auto;
+            background: var(--panel-bg-light);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 20px var(--shadow-light);
+            text-align: center;
+            display: none;
+        }
+
+        .auth-title {
+            font-size: 24px; font-weight: 700;
+            background: linear-gradient(45deg, var(--vtb-blue), var(--sber-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+        }
+
+        /* ИНТЕРФЕЙС ПОРТАЛА */
+        #mainInterface {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        header {
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-light);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-text {
+            font-weight: 700; font-size: 18px;
+            color: var(--text-dark);
+            letter-spacing: 0.5px;
+        }
+
+        .user-name-gradient { /* Градиент для ника */
+            font-weight: 600;
+            background: linear-gradient(45deg, var(--vtb-blue), var(--sber-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .app-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            height: calc(100vh - 65px);
+            flex-grow: 1;
+            max-width: 1200px;
+            margin: 20px auto;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        aside {
+            background: var(--panel-bg-light);
+            border-right: 1px solid var(--border-light);
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-link {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 15px;
+            color: var(--text-muted-dark);
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .menu-link:hover, .menu-link.active {
+            background: rgba(0, 170, 255, 0.1);
+            color: var(--vtb-blue);
+        }
+
+        main {
+            padding: 30px;
+            overflow-y: auto;
+            background-color: var(--bg-light);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block; font-size: 12px; font-weight: 600;
+            color: var(--text-muted-dark); margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .form-control {
+            width: 100%; padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            color: var(--text-dark);
+            font-size: 14px; outline: none;
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, var(--vtb-blue), var(--sber-green));
+            color: white; border: none; padding: 12px 24px;
+            font-size: 14px; font-weight: 600; border-radius: 10px;
+            cursor: pointer; transition: all 0.3s;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 170, 255, 0.3);
+        }
+
+        /* ЧАТ (REALTIME) */
+        .chat-container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100%;
+            background: var(--panel-bg-light);
+            border-radius: 16px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            padding: 20px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 15px;
+            background-color: var(--bg-light);
+        }
+
+        .msg-bubble {
+            max-width: 70%; padding: 12px 16px;
+            border-radius: 16px; font-size: 14px; line-height: 1.5;
+        }
+
+        .msg-bubble.my {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--tg-blue), var(--discord-purple));
+            color: white; border-bottom-right-radius: 4px;
+        }
+
+        .msg-bubble-other {
+            align-self: flex-start;
+            background: var(--border-light);
+            border-radius: 16px 16px 16px 4px;
+        }
+
+        .msg-sender {
+            font-weight: bold; font-size: 11px;
+            color: var(--tg-blue); margin-bottom: 4px;
+        }
+        .msg-bubble.my .msg-sender { color: white; }
+
+        .chat-input-area {
+            padding: 15px; background: rgba(255, 255, 255, 0.9);
+            display: flex; gap: 10px; border-top: 1px solid var(--border-light);
+        }
+
+        .chat-input {
+            flex-grow: 1; background: var(--bg-light);
+            border: 1px solid var(--border-light); border-radius: 30px;
+            padding: 10px 15px; color: var(--text-dark); font-size: 14px; outline: none;
+        }
+
+        .chat-file-preview {
+            max-width: 150px; max-height: 150px;
+            border-radius: 8px; object-fit: cover; margin-top: 5px;
+        }
+
+        .sticker-emoji { font-size: 40px; display: inline-block; margin-top: 5px; }
+
+        /* ПРОФИЛЬ */
+        .profile-container {
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+            max-width: 500px; margin: 0 auto; background: var(--panel-bg-light);
+            padding: 30px; border-radius: 16px; border: 1px solid var(--border-light);
+        }
+
+        .profile-avatar {
+            width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
+            border: 4px solid var(--vtb-blue); box-shadow: 0 0 20px rgba(0, 170, 255, 0.4);
+        }
+
+        .profile-role {
+            font-size: 12px; background: var(--sber-green); color: white;
+            padding: 4px 8px; border-radius: 5px; margin-top: -15px;
+        }
+
+        /* АДМИНКА (Защита) */
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .admin-card {
+            background: rgba(255, 255, 255, 0.7); border: 1px solid var(--border-light);
+            border-radius: 12px; padding: 20px; text-align: left;
+        }
+
+        .log-box {
+            background: #0d101a; height: 200px; overflow-y: auto;
+            border-radius: 8px; padding: 10px; font-family: 'Fira Code', monospace;
+            font-size: 11px; color: var(--sber-green); border: 1px solid rgba(0, 179, 114, 0.2);
+        }
+
+        .admin-table {
+            width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px;
+        }
+        .admin-table th, .admin-table td {
+            border: 1px solid var(--border-light); padding: 8px; text-align: left;
+        }
+        .admin-table th { background-color: var(--border-light); }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="auth-bg"> <!-- Начальный фон для авторизации -->
+
+    <!-- 🔮 SPLASH SCREEN -->
+    <div id="splashScreen">
+        <div class="spinner"></div>
+        <div class="splash-text" id="loadStatus">INITIALIZING CLOUD DATABASE Connection...</div>
+    </div>
+
+    <!-- 🔑 ВХОД / РЕГИСТРАЦИЯ -->
+    <div id="authScreen">
+        <div class="auth-title" id="authFormTitle">ВХОД В СИСТЕМУ</div>
+        <div style="color: #ff5555; font-size: 12px; margin-bottom: 15px; display: none;" id="authError"></div>
+        
+        <form onsubmit="handleAuth(event)">
+            <div class="form-group">
+                <label>Юзернейм (юз)</label>
+                <input type="text" id="username" class="form-control" placeholder="Введи свой ник..." required>
+            </div>
+            <div class="form-group" id="emailGroup" style="display: none;">
+                <label>Электронная почта</label>
+                <input type="email" id="email" class="form-control" placeholder="name@yandex.ru">
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-action" id="authBtn" style="width: 100%;">ВОЙТИ</button>
+        </form>
+        <div style="margin-top: 20px; font-size: 13px; color: var(--text-muted-dark);">
+            <span id="toggleText" style="color: var(--vtb-blue); cursor: pointer;" onclick="toggleAuth()">Создать новый аккаунт</span>
+        </div>
+    </div>
+
+    <!-- 🛰️ ГЛАВНЫЙ ИНТЕРФЕЙС -->
+    <div id="mainInterface">
+        <header>
+            <div class="logo-text">«ПОРТАЛ ШКОЛЫ №1»</div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span id="currentUserLabel" class="user-name-gradient">Гость</span>
+                <button class="logout-btn" onclick="logout()" style="background: none; border: 1px solid rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 5px; cursor: pointer; color: var(--text-dark);">Выйти</button>
+            </div>
+        </header>
+
+        <div class="app-layout">
+            <aside id="asideMenu">
+                <a href="#" class="menu-link active" id="tab-btn-channels" onclick="switchTab('channels')">💬 Каналы школы</a>
+                <a href="#" class="menu-link" id="tab-btn-dm" onclick="switchTab('dm')">✉️ Личные сообщения</a>
+                <a href="#" class="menu-link" id="tab-btn-profile" onclick="switchTab('profile')">👤 Мой профиль</a>
+                <a href="#" class="menu-link" id="tab-btn-admin" onclick="switchTab('admin')" style="display: none;">🛡️ Защита сайта</a>
+            </aside>
+
+            <main>
+                <!-- ВКЛАДКА 1: КАНАЛЫ -->
+                <div id="tab-channels" class="chat-container">
+                    <div class="chat-header">
+                        <div>
+                            <h3 id="activeChannelName">#общий-чат</h3>
+                            <span style="font-size: 11px; color: var(--text-muted-dark);">Сетевой онлайн-чат</span>
+                        </div>
+                        <button class="btn-action btn-small" onclick="createNewChannel()">+ Канал</button>
+                    </div>
+                    <div class="chat-messages" id="channelMsgBox"></div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="channelInput" placeholder="Написать в канал (сообщения видны 24 часа)...">
+                        <button class="btn-action" onclick="sendChannelMessage()">Отправить</button>
+                    </div>
+                </div>
+
+                <!-- ВКЛАДКА 2: DM -->
+                <div id="tab-dm" style="display: none; height: 100%;">
+                    <div class="chat-container" id="dmChatBlock" style="display: none;">
+                        <div class="chat-header">
+                            <div>
+                                <h3 id="dmTargetName">Чат</h3>
+                                <span style="font-size: 11px; color: var(--sber-green);">В сети</span>
+                            </div>
+                            <button onclick="closeDMChat()" style="background:none; border:none; cursor:pointer; color:var(--text-muted-dark);">Закрыть</button>
+                        </div>
+                        <div class="chat-messages" id="dmMsgBox"></div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="dmInput" placeholder="Написать пользователю (сообщения видны 24 часа)...">
+                            <button class="btn-action" onclick="sendDirectMessage()">Отправить</button>
+                        </div>
+                    </div>
+
+                    <div id="dmSearchBlock" style="max-width: 450px; margin: 50px auto; text-align: center;">
+                        <h3 style="margin-bottom: 20px;">Найти друга по ЮЗУ (нику)</h3>
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="searchUserField" placeholder="Введите никнейм друга...">
+                        </div>
+                        <button class="btn-action" onclick="startPrivateChat()" style="width: 100%;">НАЧАТЬ ОБЩЕНИЕ</button>
+                    </div>
+                </div>
+
+                <!-- ВКЛАДКА 3: МОЙ ПРОФИЛЬ -->
+                <div id="tab-profile" style="display: none;">
+                    <div class="profile-container">
+                        <img id="profilePic" class="profile-avatar" src="https://i.ibb.co/C5fL36t/default-avatar.png">
+                        <h2 id="profileUsername" class="profile-name">Загрузка...</h2>
+                        <div id="profileRole" class="profile-role">Пользователь</div>
+                        <div style="font-size: 13px; color: var(--text-muted-dark);" id="profileEmailBadge">Почта не привязана</div>
+                        <p id="profileBio" class="profile-bio"></p>
+
+                        <div style="width: 100%; margin-top: 20px;">
+                            <div class="form-group">
+                                <label>Ссылка на фото профиля (аватарку)</label>
+                                <input type="text" class="form-control" id="avatarInput" placeholder="Вставьте ссылку на картинку...">
+                            </div>
+                            <div class="form-group">
+                                <label>Статус (О себе)</label>
+                                <input type="text" class="form-control" id="bioInput" placeholder="Расскажи о себе...">
+                            </div>
+                            <div class="form-group">
+                                <label>Привязать E-mail</label>
+                                <input type="email" class="form-control" id="profileEmailInput" placeholder="name@yandex.ru">
+                            </div>
+                            <div class="form-group">
+                                <label>Фоновая музыка (URL на MP3 файл)</label>
+                                <input type="text" class="form-control" id="musicUrlInput" placeholder="Вставьте ссылку на аудиофайл MP3...">
+                            </div>
+                            <button class="btn-action" onclick="saveProfile()" style="width: 100%;">СОХРАНИТЬ ПРОФИЛЬ</button>
+                        </div>
+                        <audio id="bgMusicPlayer" loop controls style="width: 100%; margin-top: 20px; display: none;"></audio>
+                    </div>
+                </div>
+
+                <!-- ВКЛАДКА 4: АДМИНКА -->
+                <div id="tab-admin" style="display: none;">
+                    <h2 style="margin-bottom: 25px; text-align: left; color: var(--sber-green); font-family: 'Fira Code', monospace;">&lt;SECURITY_CONTROL_PANEL /&gt;</h2>
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <div class="admin-title"><span>АКТИВНЫЙ МОНИТОРИНГ</span><span style="color: var(--sber-green);">● ONLINE</span></div>
+                            <p style="font-size: 13px; margin-bottom: 10px;">Всего зарегистрировано аккаунтов: <b id="totalUsersCount">0</b></p>
+                            <p style="font-size: 13px; margin-bottom: 20px;">Защита XSS инъекций: <b style="color: var(--sber-green);">АКТИВНА</b></p>
+                            <button class="btn-action" onclick="simulateDDoS()" style="background: linear-gradient(135deg, #ff0055, #ff007f); width: 100%;">Симулировать DDoS атаку</button>
+                        </div>
+                        <div class="admin-card">
+                            <div class="admin-title"><span>ЖУРНАЛ СОБЫТИЙ СИСТЕМЫ</span></div>
+                            <div class="log-box" id="securityLogs">
+                                <p>[SYSTEM]: Ожидание подключения к базе данных...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card" style="margin-top: 20px;">
+                        <div class="admin-title"><span>УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ</span></div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Юзернейм</th>
+                                    <th>Роль</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ТВОИ ЛИЧНЫЕ ДАННЫЕ ИЗ FIREBASE:
+        const firebaseConfig = {
+            apiKey: "AIzaSyC231mo3eIVzjWvd3ocs9P_V_F6kxFDBO4",
+            authDomain: "gf656445.firebaseapp.com",
+            databaseURL: "https://gf656445-default-rtdb.firebaseio.com",
+            projectId: "gf656445",
+            storageBucket: "gf656445.firebasestorage.app",
+            messagingSenderId: "330425291694",
+            appId: "1:330425291694:web:fa54818d48db90a3932e3f",
+            measurementId: "G-NDL5R5KQKR"
+        };
+
+        // Инициализируем Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let currentUser = null;
+        let currentUserRole = "user";
+        let activeDMTarget = null;
+        let isRegister = false;
+        let failedLoginAttempts = 0;
+        let loginBlockTimer = false;
+        let currentChannelId = "common";
+
+        const DAY_IN_MS = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
+
+        // Проверяем подключение к базе данных
+        const connectedRef = database.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+            if (snap.val() === true) {
+                // Если есть текущий пользователь (запомнили с прошлой сессии), сразу логиним его
+                if (localStorage.getItem('lastLoginUser')) {
+                    const lastUser = JSON.parse(localStorage.getItem('lastLoginUser'));
+                    currentUser = lastUser.username;
+                    currentUserRole = lastUser.role;
+                    loginSuccess();
+                } else {
+                    document.getElementById('splashScreen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('splashScreen').style.display = 'none';
+                        document.getElementById('authScreen').style.display = 'block';
+                        document.body.style.backgroundImage = 'var(--auth-bg-image)'; // Фон для авторизации
+                    }, 800);
+                }
+                addLog("Успешное подключение к облачной базе данных Firebase Realtime Database.");
+            } else {
+                document.getElementById('loadStatus').innerText = "CONNECTING TO DATABASE... PLEASE WAIT";
+            }
+        });
+
+        // Защита от XSS
+        function cleanText(text) {
+            const temp = document.createElement('div');
+            temp.innerText = text;
+            return temp.innerHTML;
+        }
+
+        function addLog(message) {
+            const logBox = document.getElementById('securityLogs');
+            const time = new Date().toLocaleTimeString();
+            logBox.innerHTML += `<p style="color: ${message.includes('DDoS') || message.includes('Неудачная попытка') ? '#ff5555' : 'var(--sber-green)'}">[${time}] ${cleanText(message)}</p>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function toggleAuth() {
+            isRegister = !isRegister;
+            document.getElementById('authFormTitle').innerText = isRegister ? "РЕГИСТРАЦИЯ АККАУНТА" : "ВХОД В СИСТЕМУ";
+            document.getElementById('authBtn').innerText = isRegister ? "ЗАРЕГИСТРИРОВАТЬСЯ" : "ВОЙТИ";
+            document.getElementById('emailGroup').style.display = isRegister ? "block" : "none";
+            document.getElementById('toggleText').innerText = isRegister ? "Уже есть аккаунт? Войти" : "Создать новый аккаунт";
+        }
+
+        // Авторизация и регистрация через Firebase
+        function handleAuth(event) {
+            event.preventDefault();
+            if (loginBlockTimer) return;
+
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value;
+            const emailInput = document.getElementById('email').value.trim();
+            const errorBox = document.getElementById('authError');
+
+            const username = cleanText(usernameInput);
+
+            database.ref('users/' + username).once('value').then((snapshot) => {
+                const userData = snapshot.val();
+
+                if (isRegister) {
+                    if (userData) {
+                        errorBox.innerText = "Пользователь с таким ником уже существует!";
+                        errorBox.style.display = "block";
+                        return;
+                    }
+                    if (passwordInput.length < 3) {
+                        errorBox.innerText = "Пароль слишком короткий! Минимум 3 символа.";
+                        errorBox.style.display = "block";
+                        return;
+                    }
+                    // Роль по умолчанию - user, но для Sasha_Fetisov - super_admin
+                    const role = (username === "Sasha_Fetisov") ? "super_admin" : "user";
+                    const newUser = {
+                        username: username,
+                        password: passwordInput,
+                        email: emailInput || "Не привязана",
+                        avatar: "https://i.ibb.co/C5fL36t/default-avatar.png", // Дефолтная аватарка
+                        musicUrl: "",
+                        bio: "Новый пользователь портала.",
+                        role: role
+                    };
+                    database.ref('users/' + username).set(newUser);
+                    currentUser = username;
+                    currentUserRole = role;
+                    localStorage.setItem('lastLoginUser', JSON.stringify({username: currentUser, role: currentUserRole}));
+                    loginSuccess();
+                } else {
+                    if (userData && userData.password === passwordInput) {
+                        currentUser = userData.username;
+                        currentUserRole = userData.role;
+                        failedLoginAttempts = 0;
+                        localStorage.setItem('lastLoginUser', JSON.stringify({username: currentUser, role: currentUserRole}));
+                        loginSuccess();
+                    } else {
+                        failedLoginAttempts++;
+                        addLog(`Неудачная попытка входа под именем: ${username}`);
+                        if (failedLoginAttempts >= 3) {
+                            loginBlockTimer = true;
+                            errorBox.innerText = "СИСТЕМА ЗАБЛОКИРОВАНА на 30 секунд!";
+                            errorBox.style.display = "block";
+                            document.getElementById('authBtn').disabled = true;
+                            setTimeout(() => {
+                                loginBlockTimer = false;
+                                failedLoginAttempts = 0;
+                                document.getElementById('authBtn').disabled = false;
+                                errorBox.style.display = "none";
+                            }, 30000);
+                        } else {
+                            errorBox.innerText = `Неверный ник или пароль! Осталось попыток: ${3 - failedLoginAttempts}`;
+                            errorBox.style.display = "block";
+                        }
+                    }
+                }
+            });
+        }
+
+        function loginSuccess() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainInterface').style.display = 'flex';
+            document.getElementById('currentUserLabel').innerText = currentUser;
+            document.body.style.backgroundImage = 'var(--main-bg-image)'; // Фон для основного интерфейса
+            
+            if (currentUserRole === 'super_admin') {
+                document.getElementById('tab-btn-admin').style.display = 'flex';
+            } else {
+                document.getElementById('tab-btn-admin').style.display = 'none';
+            }
+
+            switchTab('channels'); // По умолчанию открываем каналы
+            loadProfileData(); // Загружаем данные профиля
+            listenToChannels(); // Начинаем слушать каналы
+            // listenToUsers(); // Слушаем изменения пользователей (для админки/DM), вызывается в updateAdminPanel
+            // DM messages will listen when chat is opened
+        }
+
+        function logout() {
+            addLog(`Пользователь ${currentUser} покинул систему.`);
+            currentUser = null;
+            currentUserRole = "user";
+            localStorage.removeItem('lastLoginUser'); // Удаляем данные о последнем входе
+            document.getElementById('mainInterface').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'block';
+            document.body.style.backgroundImage = 'var(--auth-bg-image)'; // Возвращаем фон для авторизации
+            document.getElementById('bgMusicPlayer').pause();
+            document.getElementById('bgMusicPlayer').src = "";
+            document.getElementById('bgMusicPlayer').style.display = 'none';
+            // Сброс полей формы
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['channels', 'dm', 'profile', 'admin'];
+            tabs.forEach(t => {
+                const tabElement = document.getElementById(`tab-${t}`);
+                const linkElement = document.getElementById(`tab-btn-${t}`);
+                if (tabElement) tabElement.style.display = 'none';
+                if (linkElement) linkElement.classList.remove('active');
+            });
+
+            const activeTabElement = document.getElementById(`tab-${tabName}`);
+            const activeLinkElement = document.getElementById(`tab-btn-${tabName}`);
+            if (activeTabElement) {
+                 activeTabElement.style.display = (tabName === 'channels' || tabName === 'dm') ? 'grid' : 'block';
+                 activeLinkElement.classList.add('active');
+            }
+           
+            if (tabName === 'channels') renderChannelMessages(currentChannelId); // Рендерим активный канал
+            if (tabName === 'dm') {
+                // Если DM открыт, показываем его, иначе - поиск
+                if (activeDMTarget) {
+                    document.getElementById('dmSearchBlock').style.display = 'none';
+                    document.getElementById('dmChatBlock').style.display = 'grid';
+                    listenToDMs(); // Переподключаем слушателя на активный чат
+                } else {
+                    document.getElementById('dmSearchBlock').style.display = 'block';
+                    document.getElementById('dmChatBlock').style.display = 'none';
+                }
+            }
+            if (tabName === 'profile') loadProfileData();
+            if (tabName === 'admin') updateAdminPanel();
+        }
+
+        // --- ГЕНЕРИЧЕСКАЯ ФУНКЦИЯ ДЛЯ ОТОБРАЖЕНИЯ СООБЩЕНИЙ ---
+        function renderMessagesToBox(msgBoxId, messagesData) {
+            const msgBox = document.getElementById(msgBoxId);
+            msgBox.innerHTML = '';
+            if (!messagesData) return;
+
+            const now = Date.now();
+            const messages = Object.values(messagesData); // Преобразуем объект сообщений в массив
+
+            messages.forEach(msg => {
+                // ПРОВЕРКА ВРЕМЕНИ: если сообщению больше 24 часов, не отображаем его
+                const messageCreationTime = msg.createdAt || 0; // Если createdAt нет (для старых сообщений), считаем 0
+                if (messageCreationTime && (now - messageCreationTime > DAY_IN_MS)) {
+                    return; // Пропускаем отрисовку старых сообщений
+                }
+
+                const isMy = msg.sender === currentUser;
+                let contentHTML = '';
+
+                // Определение картинок, видео или стикеров/эмодзи по ссылке/тексту
+                const imageUrlMatch = msg.text.match(/(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp))/i);
+                const videoUrlMatch = msg.text.match(/(https?:\/\/[^\s]+\.(?:mp4|webm))/i);
+                const stickerEmojiMatch = msg.text.match(/^[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]+$/u);
+                
+                if (imageUrlMatch) {
+                    contentHTML = `<img src="${imageUrlMatch[0]}" alt="Image" class="chat-file-preview">`;
+                } else if (videoUrlMatch) {
+                    contentHTML = `<video src="${videoUrlMatch[0]}" controls class="chat-file-preview"></video>`;
+                } else if (stickerEmojiMatch) {
+                    contentHTML = `<div class="sticker-emoji">${msg.text}</div>`;
+                } else {
+                    contentHTML = `<div>${msg.text}</div>`;
+                }
+
+                msgBox.innerHTML += `
+                    <div class="msg-bubble ${isMy ? 'my' : 'msg-bubble-other'}">
+                        <div class="msg-sender">${msg.sender} <span style="font-weight:normal; font-size:9px; color:#888;">(${msg.timestamp})</span></div>
+                        ${contentHTML}
+                    </div>
+                `;
+            });
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+
+        // 💬 КАНАЛЫ (БАЗА FIREBASE В РЕАЛЬНОМ ВРЕМЕНИ)
+        function listenToChannels() {
+            database.ref('channels').on('value', (snapshot) => {
+                const channels = snapshot.val();
+                const asideMenu = document.getElementById('asideMenu');
+                
+                // Удаляем старые динамические ссылки на каналы, кроме базовых
+                document.querySelectorAll('.channel-link-dynamic').forEach(el => el.remove());
+
+                if (channels) {
+                    Object.keys(channels).forEach(id => {
+                        const channel = channels[id];
+                        const link = document.createElement('a');
+                        link.href = "#";
+                        link.className = `menu-link channel-link-dynamic ${id === currentChannelId ? 'active' : ''}`;
+                        link.innerHTML = `<span>#${channel.name}</span>`;
+                        link.onclick = (e) => {
+                            e.preventDefault();
+                            currentChannelId = id;
+                            document.getElementById('activeChannelName').innerText = `#${channel.name}`;
+                            renderMessagesToBox('channelMsgBox', channel.messages); // Используем универсальный рендер
+                            switchTab('channels'); // Убедиться, что вкладка каналов активна
+                        };
+                        // Вставляем новый канал перед ссылкой на DM
+                        const dmLink = document.getElementById('tab-btn-dm');
+                        if (dmLink) {
+                            asideMenu.insertBefore(link, dmLink);
+                        } else {
+                            asideMenu.appendChild(link);
+                        }
+                    });
+                }
+                // Рендерим сообщения для текущего активного канала
+                if (channels && channels[currentChannelId]) {
+                    renderMessagesToBox('channelMsgBox', channels[currentChannelId].messages);
+                } else if (channels && Object.keys(channels).length > 0) { // Если текущего канала нет, выбираем первый
+                    currentChannelId = Object.keys(channels)[0];
+                    document.getElementById('activeChannelName').innerText = `#${channels[currentChannelId].name}`;
+                    renderMessagesToBox('channelMsgBox', channels[currentChannelId].messages);
+                }
+            });
+        }
+
+        function sendChannelMessage() {
+            const text = document.getElementById('channelInput').value.trim();
+            if (!text) return;
+
+            const time = new Date().toLocaleTimeString();
+            database.ref(`channels/${currentChannelId}/messages`).push({
+                sender: currentUser,
+                text: cleanText(text),
+                timestamp: time,
+                createdAt: Date.now() // ДОБАВЛЕНО: время создания для автоудаления
+            });
+            document.getElementById('channelInput').value = '';
+        }
+
+        function createNewChannel() {
+            const name = prompt("Введите имя нового канала (только английские буквы и цифры, без пробелов):");
+            if (!name) return;
+            const cleanedName = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, ''); // Только буквы и цифры для ID
+
+            database.ref(`channels`).once('value').then(snapshot => {
+                const existingChannels = snapshot.val();
+                if (existingChannels && existingChannels[cleanedName]) {
+                    alert("Канал с таким именем уже существует!");
+                    return;
+                }
+
+                database.ref(`channels/${cleanedName}`).set({
+                    name: name.trim(), // Имя в чате будет таким, как ввели
+                    messages: {
+                        first: { sender: "System", text: `Канал #${name.trim()} успешно создан в облаке!`, timestamp: "Система", createdAt: Date.now() } // Время для системного сообщения
+                    }
+                });
+                addLog(`Пользователь ${currentUser} создал канал #${name.trim()}`);
+                // currentChannelId автоматически обновится через слушателя listenToChannels
+            });
+        }
+
+
+        // ✉️ ЛИЧНЫЕ СООБЩЕНИЯ (FIREBASE)
+        function listenToDMs() {
+            database.ref('dms').on('value', (snapshot) => {
+                if (!activeDMTarget || !currentUser) return; // Если чат не активен, не рендерим
+
+                const dms = snapshot.val();
+                const messagesToRender = [];
+
+                if (dms) {
+                    Object.keys(dms).forEach(key => {
+                        const msg = dms[key];
+                        const isDirectMatch = (msg.sender === currentUser && msg.receiver === activeDMTarget) || 
+                                              (msg.sender === activeDMTarget && msg.receiver === currentUser);
+                        if (isDirectMatch) {
+                            messagesToRender.push(msg);
+                        }
+                    });
+                }
+                renderMessagesToBox('dmMsgBox', messagesToRender); // Используем универсальный рендер
+            });
+        }
+
+        function sendDirectMessage() {
+            const text = document.getElementById('dmInput').value.trim();
+            if (!text || !activeDMTarget) return;
+
+            database.ref('dms').push({
+                sender: currentUser,
+                receiver: activeDMTarget,
+                text: cleanText(text),
+                timestamp: new Date().toLocaleTimeString(),
+                createdAt: Date.now() // ДОБАВЛЕНО: время создания для автоудаления
+            });
+            document.getElementById('dmInput').value = '';
+        }
+
+
+        // 👤 ПРОФИЛЬ
+        function loadProfileData() {
+            database.ref('users/' + currentUser).once('value').then(snap => {
+                const user = snap.val();
+                if (user) {
+                    document.getElementById('profileUsername').innerText = user.username;
+                    document.getElementById('profilePic').src = user.avatar || "https://i.ibb.co/C5fL36t/default-avatar.png";
+                    document.getElementById('profileBio').innerText = user.bio || "Пользователь пока ничего о себе не рассказал.";
+                    document.getElementById('profileRole').innerText = user.role === "super_admin" ? "СуперАдмин" : (user.role === "admin" ? "Администратор" : "Пользователь");
+
+                    document.getElementById('avatarInput').value = user.avatar || "";
+                    document.getElementById('bioInput').value = user.bio || "";
+                    document.getElementById('profileEmailInput').value = user.email !== "Не привязана" ? user.email : "";
+                    document.getElementById('musicUrlInput').value = user.musicUrl || "";
+
+                    const player = document.getElementById('bgMusicPlayer');
+                    if (user.musicUrl) {
+                        player.src = user.musicUrl;
+                        player.style.display = 'block';
+                        player.play().catch(e => console.log("Музыка ждет взаимодействия с сайтом."));
+                    } else {
+                        player.style.display = 'none';
+                        player.pause();
+                        player.src = ""; // Очищаем источник, чтобы не было ошибки
+                    }
+                }
+            });
+        }
+
+        function saveProfile() {
+            const avatar = document.getElementById('avatarInput').value.trim();
+            const bio = cleanText(document.getElementById('bioInput').value.trim());
+            const email = document.getElementById('profileEmailInput').value.trim() || "Не привязана";
+            const musicUrl = document.getElementById('musicUrlInput').value.trim();
+
+            database.ref('users/' + currentUser).update({
+                avatar: avatar || "https://i.ibb.co/C5fL36t/default-avatar.png",
+                bio: bio,
+                email: email,
+                musicUrl: musicUrl
+            });
+            alert("Ваш профиль обновлен в облаке!");
+            addLog(`Пользователь ${currentUser} обновил данные профиля.`);
+            loadProfileData();
+        }
+
+        // 🛡️ АДМИНКА (УПРАВЛЕНИЕ РОЛЯМИ)
+        function updateAdminPanel() {
+            database.ref('users').on('value', (snapshot) => { // Слушаем изменения в пользователях
+                const users = snapshot.val();
+                const tableBody = document.getElementById('adminUsersTableBody');
+                tableBody.innerHTML = '';
+                
+                if (users) {
+                    const count = Object.keys(users).length;
+                    document.getElementById('totalUsersCount').innerText = count;
+
+                    Object.keys(users).forEach(key => {
+                        const user = users[key];
+                        const row = tableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${user.username}</td>
+                            <td>${user.role === 'super_admin' ? 'СуперАдмин' : (user.role === 'admin' ? 'Администратор' : 'Пользователь')}</td>
+                            <td>
+                                ${user.username !== currentUser ? `
+                                    <button class="btn-action btn-small" onclick="changeUserRole('${user.username}', 'admin')">Админ</button>
+                                    <button class="btn-action btn-small" onclick="changeUserRole('${user.username}', 'user')" style="background:#ff5555;">Снять</button>
+                                ` : '—'}
+                            </td>
+                        `;
+                    });
+                }
+            });
+        }
+
+        function changeUserRole(username, newRole) {
+            if (currentUserRole !== 'super_admin') {
+                alert("У вас нет прав для изменения ролей!");
+                return;
+            }
+             if (username === currentUser) {
+                alert("Нельзя изменить свою собственную роль!");
+                return;
+            }
+
+            database.ref(`users/${username}`).update({ role: newRole });
+            alert(`Роль пользователя ${username} успешно обновлена!`);
+            addLog(`[АДМИН ДЕЙСТВИЕ]: ${currentUser} изменил роль ${username} на ${newRole}`);
+            updateAdminPanel();
+        }
+
+        function simulateDDoS() {
+            addLog("🚨 СИМУЛЯЦИЯ DDoS: Идет отправка 10,000 ложных запросов на сервер...");
+            setTimeout(() => {
+                addLog("🛡️ IPS СИСТЕМА: Сработала автоматическая защита, IP злоумышленника заблокирован.");
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
