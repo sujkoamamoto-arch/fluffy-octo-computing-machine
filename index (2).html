@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Школьный портал «МОЯ ШКОЛА» v4.1 Ephemeral</title>
+    <title>Школьный Портал (VK/TG Edition)</title>
     <!-- Подключаем библиотеки Firebase через CDN -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -12,13 +12,13 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
 
         :root {
-            /* Переменные для светлой темы с неоновыми акцентами */
-            --bg-light: #f0f2f5; /* Светлый фон (как в ВК) */
-            --panel-bg-light: rgba(255, 255, 255, 0.85); /* Полупрозрачные белые панели */
-            --sber-green: #00b372; /* Зеленый Сбер */
-            --vtb-blue: #00aaff; /* Неоновый синий ВТБ */
-            --tg-blue: #24a1de; /* Телеграм синий */
-            --discord-purple: #7289da; /* Дискорд фиолетовый */
+            /* Базовые цвета */
+            --bg-light: #f0f2f5; /* Светлый основной фон */
+            --panel-bg-light: rgba(255, 255, 255, 0.9); /* Полупрозрачные панели */
+            --sber-green: #00b372; /* Зеленый акцент */
+            --vtb-blue: #00aaff; /* Неоновый синий акцент */
+            --tg-blue: #24a1de; /* Телеграм синий для сообщений */
+            --discord-purple: #7289da; /* Дискорд фиолетовый для сообщений */
             --text-dark: #2c2d2e;
             --text-muted-dark: #666e7a;
             --border-light: #d8dee7;
@@ -26,8 +26,8 @@
             --shadow-light: rgba(0, 0, 0, 0.05);
 
             /* Фоновые изображения */
-            --auth-bg-image: url('https://i.ibb.co/WXBb7yV/792f365f758b818dfa3be5c531a9b71e.jpg'); /* Стартовая страница (Твоя новая ссылка) */
-            --main-bg-image: url('https://i.ibb.co/bMCgJ7db/9c271b0b0c6e99773b755b1ff309610f.jpg'); /* После входа (Твоя новая ссылка) */
+            --auth-bg-image: url('https://i.ibb.co/WXBb7yV/792f365f758b818dfa3be5c531a9b71e.jpg'); /* Стартовая страница */
+            --main-bg-image: url('https://i.ibb.co/bMCgJ7db/9c271b0b0c6e99773b755b1ff309610f.jpg'); /* После входа */
         }
 
         /* Общие сбросы и шрифты */
@@ -44,42 +44,29 @@
             background-size: cover;
             background-position: center center;
             background-attachment: fixed;
-            transition: background-image 1s ease-in-out; /* Плавный переход фона */
-            position: relative; /* Для наложения затемнения */
+            transition: background-image 1s ease-in-out;
+            position: relative;
         }
         body::before { /* Затемнение для читаемости текста */
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.3); /* Темный полупрозрачный слой */
+            background: rgba(0, 0, 0, 0.3);
             z-index: -1;
         }
 
-        /* 🚀 ЗАСТАВКА */
+        /* 🚀 ЗАСТАВКА (Splash Screen) */
         #splashScreen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: var(--bg-light); /* Фон заставки */
+            background-color: var(--bg-light);
             z-index: 1000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             transition: opacity 0.8s ease, visibility 0.8s;
         }
+        .spinner { width: 70px; height: 70px; border: 5px solid rgba(0, 170, 255, 0.1); border-top: 5px solid var(--vtb-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        .splash-text { font-family: 'Fira Code', monospace; color: var(--sber-green); font-size: 14px; }
 
-        .spinner {
-            width: 70px; height: 70px;
-            border: 5px solid rgba(0, 170, 255, 0.1);
-            border-top: 5px solid var(--vtb-blue);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        .splash-text {
-            font-family: 'Fira Code', monospace;
-            color: var(--sber-green);
-            font-size: 14px;
-        }
-
-        /* АВТОРИЗАЦИЯ */
+        /* 🔑 АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ */
         #authScreen {
             max-width: 420px; width: 90%; margin: auto;
             background: var(--panel-bg-light);
@@ -91,225 +78,63 @@
             text-align: center;
             display: none;
         }
+        .auth-title { font-size: 24px; font-weight: 700; background: linear-gradient(45deg, var(--vtb-blue), var(--sber-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted-dark); margin-bottom: 8px; text-transform: uppercase; }
+        .form-control { width: 100%; padding: 12px 16px; background: rgba(255, 255, 255, 0.7); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-dark); font-size: 14px; outline: none; }
+        .btn-action { background: linear-gradient(135deg, var(--vtb-blue), var(--sber-green)); color: white; border: none; padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.3s; }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 170, 255, 0.3); }
+        .btn-small { padding: 8px 15px; font-size: 13px; border-radius: 8px; }
 
-        .auth-title {
-            font-size: 24px; font-weight: 700;
-            background: linear-gradient(45deg, var(--vtb-blue), var(--sber-green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 30px;
-        }
-
-        /* ИНТЕРФЕЙС ПОРТАЛА */
+        /* 🛰️ ГЛАВНЫЙ ИНТЕРФЕЙС */
         #mainInterface {
-            display: none;
-            flex-direction: column;
-            flex-grow: 1;
+            display: none; flex-direction: column; flex-grow: 1;
         }
+        header { background: var(--panel-bg-light); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-light); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .logo-text { font-weight: 700; font-size: 18px; color: var(--text-dark); letter-spacing: 0.5px; }
+        .user-name-gradient { font-weight: 600; background: linear-gradient(45deg, var(--vtb-blue), var(--sber-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .app-layout { display: grid; grid-template-columns: 240px 1fr; height: calc(100vh - 65px); max-width: 1200px; margin: 20px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
+        aside { background: var(--panel-bg-light); border-right: 1px solid var(--border-light); padding: 20px 10px; display: flex; flex-direction: column; gap: 8px; }
+        .menu-link { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--text-muted-dark); text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .menu-link:hover, .menu-link.active { background: rgba(0, 170, 255, 0.1); color: var(--vtb-blue); }
+        main { padding: 0; overflow-y: auto; background-color: var(--bg-light); display: flex; flex-direction: column; } /* Убрал отступ, чтобы чат занимал всю ширину */
 
-        header {
-            background: var(--header-bg);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-light);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo-text {
-            font-weight: 700; font-size: 18px;
-            color: var(--text-dark);
-            letter-spacing: 0.5px;
-        }
-
-        .user-name-gradient { /* Градиент для ника */
-            font-weight: 600;
-            background: linear-gradient(45deg, var(--vtb-blue), var(--sber-green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .app-layout {
-            display: grid;
-            grid-template-columns: 240px 1fr;
-            height: calc(100vh - 65px);
-            flex-grow: 1;
-            max-width: 1200px;
-            margin: 20px auto;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        aside {
-            background: var(--panel-bg-light);
-            border-right: 1px solid var(--border-light);
-            padding: 20px 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .menu-link {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 15px;
-            color: var(--text-muted-dark);
-            text-decoration: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .menu-link:hover, .menu-link.active {
-            background: rgba(0, 170, 255, 0.1);
-            color: var(--vtb-blue);
-        }
-
-        main {
-            padding: 30px;
-            overflow-y: auto;
-            background-color: var(--bg-light);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block; font-size: 12px; font-weight: 600;
-            color: var(--text-muted-dark); margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        .form-control {
-            width: 100%; padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            color: var(--text-dark);
-            font-size: 14px; outline: none;
-        }
-
-        .btn-action {
-            background: linear-gradient(135deg, var(--vtb-blue), var(--sber-green));
-            color: white; border: none; padding: 12px 24px;
-            font-size: 14px; font-weight: 600; border-radius: 10px;
-            cursor: pointer; transition: all 0.3s;
-        }
-
-        .btn-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 170, 255, 0.3);
-        }
-
-        /* ЧАТ (REALTIME) */
-        .chat-container {
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            height: 100%;
-            background: var(--panel-bg-light);
-            border-radius: 16px;
-            border: 1px solid var(--border-light);
-            overflow: hidden;
-        }
-
-        .chat-header {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px 25px;
-            border-bottom: 1px solid var(--border-light);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-messages {
-            padding: 20px; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 15px;
-            background-color: var(--bg-light);
-        }
-
-        .msg-bubble {
-            max-width: 70%; padding: 12px 16px;
-            border-radius: 16px; font-size: 14px; line-height: 1.5;
-        }
-
-        .msg-bubble.my {
-            align-self: flex-end;
-            background: linear-gradient(135deg, var(--tg-blue), var(--discord-purple));
-            color: white; border-bottom-right-radius: 4px;
-        }
-
-        .msg-bubble-other {
-            align-self: flex-start;
-            background: var(--border-light);
-            border-radius: 16px 16px 16px 4px;
-        }
-
-        .msg-sender {
-            font-weight: bold; font-size: 11px;
-            color: var(--tg-blue); margin-bottom: 4px;
-        }
+        /* 💬 ЧАТ (КАНАЛЫ / DM) */
+        .chat-container { display: grid; grid-template-rows: auto 1fr auto; height: 100%; background: var(--panel-bg-light); border-radius: 16px; border: 1px solid var(--border-light); overflow: hidden; }
+        .chat-header { background: rgba(255, 255, 255, 0.9); padding: 15px 25px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
+        .chat-messages { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background-color: var(--bg-light); flex-grow: 1; }
+        .msg-bubble { max-width: 70%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .msg-bubble.my { align-self: flex-end; background: linear-gradient(135deg, var(--tg-blue), var(--discord-purple)); color: white; border-bottom-right-radius: 4px; }
+        .msg-bubble-other { align-self: flex-start; background: var(--border-light); border-radius: 16px 16px 16px 4px; }
+        .msg-sender { font-weight: bold; font-size: 11px; color: var(--tg-blue); margin-bottom: 4px; }
         .msg-bubble.my .msg-sender { color: white; }
-
-        .chat-input-area {
-            padding: 15px; background: rgba(255, 255, 255, 0.9);
-            display: flex; gap: 10px; border-top: 1px solid var(--border-light);
-        }
-
-        .chat-input {
-            flex-grow: 1; background: var(--bg-light);
-            border: 1px solid var(--border-light); border-radius: 30px;
-            padding: 10px 15px; color: var(--text-dark); font-size: 14px; outline: none;
-        }
-
-        .chat-file-preview {
-            max-width: 150px; max-height: 150px;
-            border-radius: 8px; object-fit: cover; margin-top: 5px;
-        }
-
+        .chat-input-area { padding: 15px; background: rgba(255, 255, 255, 0.9); display: flex; gap: 10px; border-top: 1px solid var(--border-light); }
+        .chat-input { flex-grow: 1; background: var(--bg-light); border: 1px solid var(--border-light); border-radius: 30px; padding: 10px 15px; color: var(--text-dark); font-size: 14px; outline: none; }
+        .chat-file-preview { max-width: 150px; max-height: 150px; border-radius: 8px; object-fit: cover; margin-top: 5px; }
         .sticker-emoji { font-size: 40px; display: inline-block; margin-top: 5px; }
 
-        /* ПРОФИЛЬ */
+        /* 👤 ПРОФИЛЬ */
         .profile-container {
             display: flex; flex-direction: column; align-items: center; gap: 20px;
-            max-width: 500px; margin: 0 auto; background: var(--panel-bg-light);
-            padding: 30px; border-radius: 16px; border: 1px solid var(--border-light);
+            max-width: 500px; margin: 30px auto; background: var(--panel-bg-light);
+            padding: 30px; border-radius: 16px; border: 1px solid var(--border-light); box-shadow: 0 4px 15px var(--shadow-light);
         }
+        .profile-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--vtb-blue); box-shadow: 0 0 20px rgba(0, 170, 255, 0.4); }
+        .profile-name { font-size: 22px; font-weight: 700; color: var(--text-dark); }
+        .profile-id { font-size: 13px; color: var(--text-muted-dark); margin-top: -10px; }
+        .profile-role { font-size: 12px; background: var(--sber-green); color: white; padding: 4px 8px; border-radius: 5px; margin-top: -15px; }
+        .profile-bio { font-size: 14px; color: var(--text-dark); text-align: center; }
+        
+        /* 🛡️ АДМИНКА */
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .admin-card { background: var(--panel-bg-light); border: 1px solid var(--border-light); border-radius: 12px; padding: 20px; text-align: left; box-shadow: 0 2px 10px var(--shadow-light); }
+        .admin-title { color: var(--sber-green); font-family: 'Fira Code', monospace; font-size: 16px; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .log-box { background: #0d101a; height: 200px; overflow-y: auto; border-radius: 8px; padding: 10px; font-family: 'Fira Code', monospace; font-size: 11px; color: var(--sber-green); border: 1px solid rgba(0, 179, 114, 0.2); margin-top: 15px; }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        .admin-table th, .admin-table td { border: 1px solid var(--border-light); padding: 8px; text-align: left; }
+        .admin-table th { background-color: var(--border-light); color: var(--text-dark); }
 
-        .profile-avatar {
-            width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
-            border: 4px solid var(--vtb-blue); box-shadow: 0 0 20px rgba(0, 170, 255, 0.4);
-        }
-
-        .profile-role {
-            font-size: 12px; background: var(--sber-green); color: white;
-            padding: 4px 8px; border-radius: 5px; margin-top: -15px;
-        }
-
-        /* АДМИНКА (Защита) */
-        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .admin-card {
-            background: rgba(255, 255, 255, 0.7); border: 1px solid var(--border-light);
-            border-radius: 12px; padding: 20px; text-align: left;
-        }
-
-        .log-box {
-            background: #0d101a; height: 200px; overflow-y: auto;
-            border-radius: 8px; padding: 10px; font-family: 'Fira Code', monospace;
-            font-size: 11px; color: var(--sber-green); border: 1px solid rgba(0, 179, 114, 0.2);
-        }
-
-        .admin-table {
-            width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px;
-        }
-        .admin-table th, .admin-table td {
-            border: 1px solid var(--border-light); padding: 8px; text-align: left;
-        }
-        .admin-table th { background-color: var(--border-light); }
-
+        /* АНИМАЦИИ */
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -412,6 +237,7 @@
                     <div class="profile-container">
                         <img id="profilePic" class="profile-avatar" src="https://i.ibb.co/C5fL36t/default-avatar.png">
                         <h2 id="profileUsername" class="profile-name">Загрузка...</h2>
+                        <div id="profileUserId" class="profile-id"></div> <!-- Здесь будет @юз -->
                         <div id="profileRole" class="profile-role">Пользователь</div>
                         <div style="font-size: 13px; color: var(--text-muted-dark);" id="profileEmailBadge">Почта не привязана</div>
                         <p id="profileBio" class="profile-bio"></p>
@@ -498,7 +324,7 @@
         let isRegister = false;
         let failedLoginAttempts = 0;
         let loginBlockTimer = false;
-        let currentChannelId = "common";
+        let currentChannelId = "common"; // Активный канал по умолчанию
 
         const DAY_IN_MS = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
 
@@ -535,9 +361,11 @@
 
         function addLog(message) {
             const logBox = document.getElementById('securityLogs');
-            const time = new Date().toLocaleTimeString();
-            logBox.innerHTML += `<p style="color: ${message.includes('DDoS') || message.includes('Неудачная попытка') ? '#ff5555' : 'var(--sber-green)'}">[${time}] ${cleanText(message)}</p>`;
-            logBox.scrollTop = logBox.scrollHeight;
+            if (logBox) { // Проверяем, существует ли logBox (виден только админам)
+                const time = new Date().toLocaleTimeString();
+                logBox.innerHTML += `<p style="color: ${message.includes('DDoS') || message.includes('Неудачная попытка') ? '#ff5555' : 'var(--sber-green)'}">[${time}] ${cleanText(message)}</p>`;
+                logBox.scrollTop = logBox.scrollHeight;
+            }
         }
 
         function toggleAuth() {
@@ -590,6 +418,7 @@
                     currentUserRole = role;
                     localStorage.setItem('lastLoginUser', JSON.stringify({username: currentUser, role: currentUserRole}));
                     loginSuccess();
+                    addLog(`Новый пользователь ${currentUser} (${currentUserRole}) зарегистрирован.`);
                 } else {
                     if (userData && userData.password === passwordInput) {
                         currentUser = userData.username;
@@ -597,12 +426,13 @@
                         failedLoginAttempts = 0;
                         localStorage.setItem('lastLoginUser', JSON.stringify({username: currentUser, role: currentUserRole}));
                         loginSuccess();
+                        addLog(`Пользователь ${currentUser} (${currentUserRole}) успешно авторизован в системе.`);
                     } else {
                         failedLoginAttempts++;
                         addLog(`Неудачная попытка входа под именем: ${username}`);
                         if (failedLoginAttempts >= 3) {
                             loginBlockTimer = true;
-                            errorBox.innerText = "СИСТЕМА ЗАБЛОКИРОВАНА на 30 секунд!";
+                            errorBox.innerText = "СИСТЕМА ЗАБЛОКИРОВАНА на 30 секунд за подбор паролей!";
                             errorBox.style.display = "block";
                             document.getElementById('authBtn').disabled = true;
                             setTimeout(() => {
@@ -610,6 +440,7 @@
                                 failedLoginAttempts = 0;
                                 document.getElementById('authBtn').disabled = false;
                                 errorBox.style.display = "none";
+                                addLog("Блокировка брутфорса снята.");
                             }, 30000);
                         } else {
                             errorBox.innerText = `Неверный ник или пароль! Осталось попыток: ${3 - failedLoginAttempts}`;
@@ -625,6 +456,7 @@
             document.getElementById('mainInterface').style.display = 'flex';
             document.getElementById('currentUserLabel').innerText = currentUser;
             document.body.style.backgroundImage = 'var(--main-bg-image)'; // Фон для основного интерфейса
+            document.body.classList.remove('auth-bg'); // Убираем класс для фона авторизации
             
             if (currentUserRole === 'super_admin') {
                 document.getElementById('tab-btn-admin').style.display = 'flex';
@@ -635,8 +467,6 @@
             switchTab('channels'); // По умолчанию открываем каналы
             loadProfileData(); // Загружаем данные профиля
             listenToChannels(); // Начинаем слушать каналы
-            // listenToUsers(); // Слушаем изменения пользователей (для админки/DM), вызывается в updateAdminPanel
-            // DM messages will listen when chat is opened
         }
 
         function logout() {
@@ -653,6 +483,9 @@
             // Сброс полей формы
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
+            document.getElementById('authError').style.display = 'none'; // Скрываем ошибки
+            isRegister = false; // Возвращаем форму в режим входа
+            toggleAuth(); // Обновляем текст кнопки/заголовка
         }
 
         function switchTab(tabName) {
@@ -671,9 +504,10 @@
                  activeLinkElement.classList.add('active');
             }
            
-            if (tabName === 'channels') renderChannelMessages(currentChannelId); // Рендерим активный канал
+            if (tabName === 'channels') {
+                // Слушатель listenToChannels уже обновляет currentChannelId и рендерит
+            }
             if (tabName === 'dm') {
-                // Если DM открыт, показываем его, иначе - поиск
                 if (activeDMTarget) {
                     document.getElementById('dmSearchBlock').style.display = 'none';
                     document.getElementById('dmChatBlock').style.display = 'grid';
@@ -681,6 +515,7 @@
                 } else {
                     document.getElementById('dmSearchBlock').style.display = 'block';
                     document.getElementById('dmChatBlock').style.display = 'none';
+                    document.getElementById('dmMsgBox').innerHTML = ''; // Очищаем чат при закрытии
                 }
             }
             if (tabName === 'profile') loadProfileData();
@@ -698,7 +533,7 @@
 
             messages.forEach(msg => {
                 // ПРОВЕРКА ВРЕМЕНИ: если сообщению больше 24 часов, не отображаем его
-                const messageCreationTime = msg.createdAt || 0; // Если createdAt нет (для старых сообщений), считаем 0
+                const messageCreationTime = msg.createdAt || 0; 
                 if (messageCreationTime && (now - messageCreationTime > DAY_IN_MS)) {
                     return; // Пропускаем отрисовку старых сообщений
                 }
@@ -709,16 +544,16 @@
                 // Определение картинок, видео или стикеров/эмодзи по ссылке/тексту
                 const imageUrlMatch = msg.text.match(/(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp))/i);
                 const videoUrlMatch = msg.text.match(/(https?:\/\/[^\s]+\.(?:mp4|webm))/i);
-                const stickerEmojiMatch = msg.text.match(/^[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]+$/u);
-                
+                const stickerEmojiMatch = msg.text.match(/^[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]{1,3}$/u); // до 3 эмодзи подряд как стикер
+
                 if (imageUrlMatch) {
                     contentHTML = `<img src="${imageUrlMatch[0]}" alt="Image" class="chat-file-preview">`;
                 } else if (videoUrlMatch) {
                     contentHTML = `<video src="${videoUrlMatch[0]}" controls class="chat-file-preview"></video>`;
-                } else if (stickerEmojiMatch) {
+                } else if (stickerEmojiMatch && msg.text.length <= 10) { // если короткий текст и это эмодзи
                     contentHTML = `<div class="sticker-emoji">${msg.text}</div>`;
                 } else {
-                    contentHTML = `<div>${msg.text}</div>`;
+                    contentHTML = `<div>${cleanText(msg.text)}</div>`; // Используем cleanText для обычного текста
                 }
 
                 msgBox.innerHTML += `
@@ -746,11 +581,11 @@
                         const link = document.createElement('a');
                         link.href = "#";
                         link.className = `menu-link channel-link-dynamic ${id === currentChannelId ? 'active' : ''}`;
-                        link.innerHTML = `<span>#${channel.name}</span>`;
+                        link.innerHTML = `<span>#${cleanText(channel.name)}</span>`; // Имя канала тоже очищаем
                         link.onclick = (e) => {
                             e.preventDefault();
                             currentChannelId = id;
-                            document.getElementById('activeChannelName').innerText = `#${channel.name}`;
+                            document.getElementById('activeChannelName').innerText = `#${cleanText(channel.name)}`;
                             renderMessagesToBox('channelMsgBox', channel.messages); // Используем универсальный рендер
                             switchTab('channels'); // Убедиться, что вкладка каналов активна
                         };
@@ -768,7 +603,7 @@
                     renderMessagesToBox('channelMsgBox', channels[currentChannelId].messages);
                 } else if (channels && Object.keys(channels).length > 0) { // Если текущего канала нет, выбираем первый
                     currentChannelId = Object.keys(channels)[0];
-                    document.getElementById('activeChannelName').innerText = `#${channels[currentChannelId].name}`;
+                    document.getElementById('activeChannelName').innerText = `#${cleanText(channels[currentChannelId].name)}`;
                     renderMessagesToBox('channelMsgBox', channels[currentChannelId].messages);
                 }
             });
@@ -781,33 +616,33 @@
             const time = new Date().toLocaleTimeString();
             database.ref(`channels/${currentChannelId}/messages`).push({
                 sender: currentUser,
-                text: cleanText(text),
+                text: text, // cleanText уже внутри renderMessagesToBox, здесь можно без
                 timestamp: time,
-                createdAt: Date.now() // ДОБАВЛЕНО: время создания для автоудаления
+                createdAt: Date.now()
             });
             document.getElementById('channelInput').value = '';
         }
 
         function createNewChannel() {
             const name = prompt("Введите имя нового канала (только английские буквы и цифры, без пробелов):");
-            if (!name) return;
-            const cleanedName = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, ''); // Только буквы и цифры для ID
+            if (!name || name.trim() === '') return;
+            const cleanedId = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, ''); // Только буквы и цифры для ID
+            if (cleanedId === '') { alert("Имя канала не может быть пустым или содержать только спецсимволы."); return; }
 
             database.ref(`channels`).once('value').then(snapshot => {
                 const existingChannels = snapshot.val();
-                if (existingChannels && existingChannels[cleanedName]) {
+                if (existingChannels && existingChannels[cleanedId]) {
                     alert("Канал с таким именем уже существует!");
                     return;
                 }
 
-                database.ref(`channels/${cleanedName}`).set({
+                database.ref(`channels/${cleanedId}`).set({
                     name: name.trim(), // Имя в чате будет таким, как ввели
                     messages: {
-                        first: { sender: "System", text: `Канал #${name.trim()} успешно создан в облаке!`, timestamp: "Система", createdAt: Date.now() } // Время для системного сообщения
+                        first: { sender: "System", text: `Канал #${cleanText(name.trim())} успешно создан в облаке!`, timestamp: "Система", createdAt: Date.now() }
                     }
                 });
-                addLog(`Пользователь ${currentUser} создал канал #${name.trim()}`);
-                // currentChannelId автоматически обновится через слушателя listenToChannels
+                addLog(`Пользователь ${currentUser} создал канал #${cleanText(name.trim())}`);
             });
         }
 
@@ -815,7 +650,7 @@
         // ✉️ ЛИЧНЫЕ СООБЩЕНИЯ (FIREBASE)
         function listenToDMs() {
             database.ref('dms').on('value', (snapshot) => {
-                if (!activeDMTarget || !currentUser) return; // Если чат не активен, не рендерим
+                if (!activeDMTarget || !currentUser) return;
 
                 const dms = snapshot.val();
                 const messagesToRender = [];
@@ -830,20 +665,54 @@
                         }
                     });
                 }
-                renderMessagesToBox('dmMsgBox', messagesToRender); // Используем универсальный рендер
+                renderMessagesToBox('dmMsgBox', messagesToRender);
             });
         }
+
+        function startPrivateChat() {
+            const target = document.getElementById('searchUserField').value.trim();
+            if (target === currentUser) {
+                alert("Нельзя переписываться с самим собой!");
+                return;
+            }
+            if (!target) {
+                alert("Введите никнейм друга!");
+                return;
+            }
+
+            database.ref('users/' + target).once('value').then(snap => {
+                if (snap.exists()) {
+                    activeDMTarget = target;
+                    document.getElementById('dmSearchBlock').style.display = 'none';
+                    document.getElementById('dmChatBlock').style.display = 'grid';
+                    document.getElementById('dmTargetName').innerText = `Чат с @${cleanText(target)}`;
+                    listenToDMs();
+                } else {
+                    alert(`Пользователь с ником "${cleanText(target)}" не зарегистрирован в базе!`);
+                }
+            });
+        }
+
+        function closeDMChat() {
+            activeDMTarget = null;
+            document.getElementById('dmChatBlock').style.display = 'none';
+            document.getElementById('dmSearchBlock').style.display = 'block';
+            document.getElementById('searchUserField').value = '';
+            database.ref('dms').off('value', listenToDMs); // Отключаем слушатель DM
+        }
+
 
         function sendDirectMessage() {
             const text = document.getElementById('dmInput').value.trim();
             if (!text || !activeDMTarget) return;
 
+            const time = new Date().toLocaleTimeString();
             database.ref('dms').push({
                 sender: currentUser,
                 receiver: activeDMTarget,
-                text: cleanText(text),
-                timestamp: new Date().toLocaleTimeString(),
-                createdAt: Date.now() // ДОБАВЛЕНО: время создания для автоудаления
+                text: text, // cleanText уже внутри renderMessagesToBox, здесь можно без
+                timestamp: time,
+                createdAt: Date.now()
             });
             document.getElementById('dmInput').value = '';
         }
@@ -854,14 +723,25 @@
             database.ref('users/' + currentUser).once('value').then(snap => {
                 const user = snap.val();
                 if (user) {
-                    document.getElementById('profileUsername').innerText = user.username;
+                    document.getElementById('profileUsername').innerText = cleanText(user.username);
+                    document.getElementById('profileUserId').innerText = `@${cleanText(user.username)}`; // ID под ником
                     document.getElementById('profilePic').src = user.avatar || "https://i.ibb.co/C5fL36t/default-avatar.png";
-                    document.getElementById('profileBio').innerText = user.bio || "Пользователь пока ничего о себе не рассказал.";
+                    document.getElementById('profileBio').innerText = cleanText(user.bio || "Пользователь пока ничего о себе не рассказал.");
                     document.getElementById('profileRole').innerText = user.role === "super_admin" ? "СуперАдмин" : (user.role === "admin" ? "Администратор" : "Пользователь");
 
                     document.getElementById('avatarInput').value = user.avatar || "";
                     document.getElementById('bioInput').value = user.bio || "";
-                    document.getElementById('profileEmailInput').value = user.email !== "Не привязана" ? user.email : "";
+                    document.getElementById('profileEmailInput').value = user.email && user.email !== "Не привязана" ? user.email : "";
+                    
+                    // Обновляем бейдж почты
+                    if (user.email && user.email !== "Не привязана") {
+                        document.getElementById('profileEmailBadge').innerText = `Почта привязана: ${cleanText(user.email)}`;
+                        document.getElementById('profileEmailBadge').style.color = 'var(--sber-green)';
+                    } else {
+                        document.getElementById('profileEmailBadge').innerText = `Почта не привязана`;
+                        document.getElementById('profileEmailBadge').style.color = '#ff5555';
+                    }
+
                     document.getElementById('musicUrlInput').value = user.musicUrl || "";
 
                     const player = document.getElementById('bgMusicPlayer');
@@ -880,14 +760,14 @@
 
         function saveProfile() {
             const avatar = document.getElementById('avatarInput').value.trim();
-            const bio = cleanText(document.getElementById('bioInput').value.trim());
+            const bio = document.getElementById('bioInput').value.trim(); // cleanText при сохранении в базу
             const email = document.getElementById('profileEmailInput').value.trim() || "Не привязана";
             const musicUrl = document.getElementById('musicUrlInput').value.trim();
 
             database.ref('users/' + currentUser).update({
                 avatar: avatar || "https://i.ibb.co/C5fL36t/default-avatar.png",
-                bio: bio,
-                email: email,
+                bio: cleanText(bio), // Очистка при записи
+                email: cleanText(email), // Очистка при записи
                 musicUrl: musicUrl
             });
             alert("Ваш профиль обновлен в облаке!");
@@ -910,12 +790,12 @@
                         const user = users[key];
                         const row = tableBody.insertRow();
                         row.innerHTML = `
-                            <td>${user.username}</td>
+                            <td>${cleanText(user.username)}</td>
                             <td>${user.role === 'super_admin' ? 'СуперАдмин' : (user.role === 'admin' ? 'Администратор' : 'Пользователь')}</td>
                             <td>
                                 ${user.username !== currentUser ? `
-                                    <button class="btn-action btn-small" onclick="changeUserRole('${user.username}', 'admin')">Админ</button>
-                                    <button class="btn-action btn-small" onclick="changeUserRole('${user.username}', 'user')" style="background:#ff5555;">Снять</button>
+                                    <button class="btn-action btn-small" onclick="changeUserRole('${cleanText(user.username)}', 'admin')">Админ</button>
+                                    <button class="btn-action btn-small" onclick="changeUserRole('${cleanText(user.username)}', 'user')" style="background:#ff5555;">Снять</button>
                                 ` : '—'}
                             </td>
                         `;
@@ -935,8 +815,8 @@
             }
 
             database.ref(`users/${username}`).update({ role: newRole });
-            alert(`Роль пользователя ${username} успешно обновлена!`);
-            addLog(`[АДМИН ДЕЙСТВИЕ]: ${currentUser} изменил роль ${username} на ${newRole}`);
+            alert(`Роль пользователя ${cleanText(username)} успешно обновлена!`);
+            addLog(`[АДМИН ДЕЙСТВИЕ]: ${currentUser} изменил роль ${cleanText(username)} на ${newRole}`);
             updateAdminPanel();
         }
 
